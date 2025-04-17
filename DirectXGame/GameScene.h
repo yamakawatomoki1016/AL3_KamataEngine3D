@@ -1,5 +1,6 @@
 #pragma once
 #include "KamataEngine.h"
+#include "Player.h"
 
 class GameScene {
 public:
@@ -33,4 +34,6 @@ private:
 	float inputFloat3[3] = {0, 0, 0};
 	//デバッグカメラ
 	KamataEngine::DebugCamera* debugCamera_ = nullptr;
+	//自キャラ
+	Player* player_ = nullptr;
 };

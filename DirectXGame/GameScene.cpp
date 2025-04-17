@@ -6,6 +6,10 @@ void GameScene::Initialize() {
 	textureHandle_ = TextureManager::Load("mario.jpg"); 
 	sprite_ = Sprite::Create(textureHandle_, {100, 50});
 	model_ = Model::Create();
+	//自キャラの生成
+	player_ = new Player();
+	//自キャラの初期化
+	player_->Initialize(model_,textureHandle_);
 	//ワールドトランスフォーム
 	worldTransform_.Initialize();
 	//カメラの初期化
@@ -48,6 +52,7 @@ void GameScene::Update() {
 	ImGui::ShowDemoWindow();
 #endif
 	debugCamera_->Update();
+	player_->Update();
 }
 
 void GameScene::Draw() { 
@@ -68,6 +73,7 @@ void GameScene::Draw() {
 	// 3Dモデル描画
 	//model_->Draw(worldTransform_, camera_, textureHandle_);
 	model_->Draw(worldTransform_, debugCamera_->GetCamera(), textureHandle_);
+	player_->Draw();
 
 	// 3Dモデル描画後処理
 	Model::PostDraw();
