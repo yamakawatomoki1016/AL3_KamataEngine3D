@@ -1,4 +1,5 @@
 #include "GameScene.h"
+#include "MyMath.h"
 
 using namespace KamataEngine;
 
@@ -12,6 +13,8 @@ void GameScene::Initialize() {
 	camera_.Initialize();
 	//自キャラの生成
 	player_ = new Player();
+	//3Dモデルデータの生成
+	modelBlock_ = Model::CreateFromOBJ("cube");
 	//自キャラの初期化
 	player_->Initialize(model_,textureHandle_,&camera_);
 	// サウンドデータハンドル
@@ -27,6 +30,33 @@ void GameScene::Initialize() {
 	AxisIndicator::GetInstance()->SetVisible(true);
 	//軸方向表示が参照するビュープロジェクションを指定する（アドレス渡し）
 	AxisIndicator::GetInstance()->SetTargetCamera(&debugCamera_->GetCamera());
+	//要素数
+	const uint32_t kNumBlockVirtical = 10;
+	const uint32_t kNumBlockHorizontal = 20;
+	//ブロック数1個分の横幅
+	const float kBlockWidth = 2.0f;
+	const float kBlockHeight = 2.0f;
+	//要素数を変更する
+	//列数を設定（縦方向のブロック数）
+	worldTransformBlocks_.resize(kNumBlockVirtical);
+	//キューブの生成
+	for (uint32_t i = 0; i < kNumBlockVirtical; ++i) {
+		//1列の要素数を設定（横方向のブロック数）
+		worldTransformBlocks_[i].resize(kNumBlockHorizontal);
+	}
+	//ブロックの生成
+	for (uint32_t i = 0; i < kNumBlockVirtical; ++i) {
+		for (uint32_t j = 0; j < kNumBlockHorizontal; ++j) {
+			if ((i + j) % 2 == 0) {
+				worldTransformBlocks_[i][j] = nullptr;
+				continue;
+			}
+			worldTransformBlocks_[i][j] = new WorldTransform();
+			worldTransformBlocks_[i][j]->Initialize();
+			worldTransformBlocks_[i][j]->translation_.x = kBlockWidth * j;
+			worldTransformBlocks_[i][j]->translation_.y = kBlockHeight * i;
+		}
+	}
 }
 
 void GameScene::Update() {
@@ -53,6 +83,17 @@ void GameScene::Update() {
 #endif
 	debugCamera_->Update();
 	player_->Update();
+	//ブロックの更新
+	for (std::vector<WorldTransform*>& worldTransformBlockkLine : worldTransformBlocks_) {
+		for (WorldTransform* worldTransformBlock : worldTransformBlockkLine) {
+			if (!worldTransformBlock) {
+				continue;
+			}
+			worldTransformBlock->matWorld_ = MakeAffineMatrix(worldTransformBlock->scale_, worldTransformBlock->rotation_, worldTransformBlock->translation_);
+			// 定数バッファに転送する
+			worldTransformBlock->TransferMatrix();
+		}
+	}
 }
 
 void GameScene::Draw() { 
@@ -74,6 +115,14 @@ void GameScene::Draw() {
 	//model_->Draw(worldTransform_, camera_, textureHandle_);
 	player_->Draw();
 	model_->Draw(worldTransform_, debugCamera_->GetCamera(), textureHandle_);
+	for (std::vector<WorldTransform*>& worldTransformBlockkLine : worldTransformBlocks_) {
+		for (WorldTransform* worldTransformBlock : worldTransformBlockkLine) {
+			if (!worldTransformBlock) {
+				continue;
+			}
+			modelBlock_->Draw(*worldTransformBlock, camera_);
+		}
+	}
 
 	// 3Dモデル描画後処理
 	Model::PostDraw();
@@ -87,4 +136,11 @@ GameScene::~GameScene() {
 	delete model_;
 	delete debugCamera_;
 	delete player_;
+	delete modelBlock_;
+	for (std::vector<WorldTransform*>& worldTransformBlockkLine : worldTransformBlocks_) {
+		for (WorldTransform* worldTransformBlock : worldTransformBlockkLine) {
+			delete worldTransformBlock;
+		}
+	}
+	worldTransformBlocks_.clear();
 }
