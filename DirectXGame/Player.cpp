@@ -1,15 +1,20 @@
 #include "Player.h"
 
-void Player::Initialize(KamataEngine::Model* model, uint32_t textureHandle) { 
+void Player::Initialize(KamataEngine::Model* model, uint32_t textureHandle, KamataEngine::Camera* camera) {
 	//NULLポインタチェック
 	assert(model);
+
 	//引数として受け取ったデータをメンバ変数に記録する
 	model_ = model;
-	textureHandle = textureHandle_;
+	textureHandle_ = textureHandle;
+	camera_ = camera;
 	//ワールド変換の初期化
 	worldTransform_.Initialize();
 }
 
-void Player::Update() {}
+void Player::Update() {
+	//行列を定数バッファに転送
+	worldTransform_.TransferMatrix();
+}
 
-void Player::Draw() {}
+void Player::Draw() { model_->Draw(worldTransform_, *camera_, textureHandle_); }

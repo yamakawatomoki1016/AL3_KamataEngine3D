@@ -6,14 +6,14 @@ void GameScene::Initialize() {
 	textureHandle_ = TextureManager::Load("mario.jpg"); 
 	sprite_ = Sprite::Create(textureHandle_, {100, 50});
 	model_ = Model::Create();
-	//自キャラの生成
-	player_ = new Player();
-	//自キャラの初期化
-	player_->Initialize(model_,textureHandle_);
 	//ワールドトランスフォーム
 	worldTransform_.Initialize();
 	//カメラの初期化
 	camera_.Initialize();
+	//自キャラの生成
+	player_ = new Player();
+	//自キャラの初期化
+	player_->Initialize(model_,textureHandle_,&camera_);
 	// サウンドデータハンドル
 	soundDataHandle_ = Audio::GetInstance()->LoadWave("fanfare.wav");
 	// 音声再生
@@ -72,8 +72,8 @@ void GameScene::Draw() {
 
 	// 3Dモデル描画
 	//model_->Draw(worldTransform_, camera_, textureHandle_);
-	model_->Draw(worldTransform_, debugCamera_->GetCamera(), textureHandle_);
 	player_->Draw();
+	model_->Draw(worldTransform_, debugCamera_->GetCamera(), textureHandle_);
 
 	// 3Dモデル描画後処理
 	Model::PostDraw();
@@ -86,4 +86,5 @@ GameScene::~GameScene() {
 	delete sprite_; 
 	delete model_;
 	delete debugCamera_;
+	delete player_;
 }
