@@ -40,4 +40,8 @@ private:
 	std::vector < std::vector<KamataEngine::WorldTransform*>> worldTransformBlocks_;
 	// 3Dモデルデータ
 	KamataEngine::Model* modelBlock_ = nullptr;
+	//デバッグカメラ友好
+	bool isDebugCameraActive_ = false;
+	//キー入力
+	KamataEngine::Input* input_ = nullptr;
 };

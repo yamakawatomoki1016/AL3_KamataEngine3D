@@ -57,6 +57,9 @@ void GameScene::Initialize() {
 			worldTransformBlocks_[i][j]->translation_.y = kBlockHeight * i;
 		}
 	}
+	//デバッグカメラの生成
+	debugCamera_ = new DebugCamera(1280, 720);
+	input_ = Input::GetInstance();
 }
 
 void GameScene::Update() {
@@ -93,6 +96,25 @@ void GameScene::Update() {
 			// 定数バッファに転送する
 			worldTransformBlock->TransferMatrix();
 		}
+	}
+#ifdef _DEBUG
+	if (Input::GetInstance()->TriggerKey(DIK_0)) {
+		isDebugCameraActive_ = !isDebugCameraActive_;
+	}
+#endif // _DEBUG
+	//カメラの処理
+	if (isDebugCameraActive_) {
+		//デバックカメラの更新
+		debugCamera_->Update();
+		//デバックカメラのビュー行列
+		camera_.matView = debugCamera_->GetCamera().matView;
+		//デバックカメラのプロジェクション行列
+		camera_.matProjection = debugCamera_->GetCamera().matProjection;
+		//ビュープロジェクション行列の転送
+		camera_.TransferMatrix();
+	} else {
+		//ビュープロジェクション行列の更新と転送
+		camera_.UpdateMatrix();
 	}
 }
 
