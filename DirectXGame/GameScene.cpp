@@ -163,6 +163,7 @@ GameScene::~GameScene() {
 	delete debugCamera_;
 	delete player_;
 	delete modelBlock_;
+	delete skydome_;
 	delete modelSkydome_;
 	for (std::vector<WorldTransform*>& worldTransformBlockkLine : worldTransformBlocks_) {
 		for (WorldTransform* worldTransformBlock : worldTransformBlockkLine) {
