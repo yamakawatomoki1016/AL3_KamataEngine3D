@@ -1,9 +1,9 @@
 #include "Player.h"
+#include "MyMath.h" 
 
 void Player::Initialize(KamataEngine::Model* model, uint32_t textureHandle, KamataEngine::Camera* camera) {
 	//NULLポインタチェック
 	assert(model);
-
 	//引数として受け取ったデータをメンバ変数に記録する
 	model_ = model;
 	textureHandle_ = textureHandle;
@@ -13,8 +13,15 @@ void Player::Initialize(KamataEngine::Model* model, uint32_t textureHandle, Kama
 }
 
 void Player::Update() {
-	//行列を定数バッファに転送
-	worldTransform_.TransferMatrix();
+    // アフィン変換行列を計算してメンバ変数に代入
+    worldTransform_.matWorld_ = MakeAffineMatrix(
+        worldTransform_.scale_,
+        worldTransform_.rotation_,
+        worldTransform_.translation_
+    );
+
+    // 定数バッファに転送
+    worldTransform_.TransferMatrix();
 }
 
-void Player::Draw() { model_->Draw(worldTransform_, *camera_, textureHandle_); }
+void Player::Draw() { model_->Draw(worldTransform_, *camera_); }

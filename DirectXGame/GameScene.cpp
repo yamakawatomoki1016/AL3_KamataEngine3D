@@ -4,9 +4,10 @@
 using namespace KamataEngine;
 
 void GameScene::Initialize() { 
-	textureHandle_ = TextureManager::Load("mario.jpg"); 
+	textureHandle_ = TextureManager::Load("player.png"); 
 	sprite_ = Sprite::Create(textureHandle_, {100, 50});
-	model_ = Model::Create();
+	//model_ = Model::Create();
+	model_ = Model::CreateFromOBJ("player");
 	//ワールドトランスフォーム
 	worldTransform_.Initialize();
 	//カメラの初期化
@@ -14,7 +15,7 @@ void GameScene::Initialize() {
 	//自キャラの生成
 	player_ = new Player();
 	//3Dモデルデータの生成
-	modelBlock_ = Model::CreateFromOBJ("cube");
+	modelBlock_ = Model::CreateFromOBJ("block");
 	//自キャラの初期化
 	player_->Initialize(model_,textureHandle_,&camera_);
 	// サウンドデータハンドル
@@ -138,7 +139,7 @@ void GameScene::Draw() {
 	Model::PreDraw(dxCommon->GetCommandList());
 
 	// 3Dモデル描画
-	//model_->Draw(worldTransform_, camera_, textureHandle_);
+	model_->Draw(worldTransform_, camera_, textureHandle_);
 	player_->Draw();
 	model_->Draw(worldTransform_, debugCamera_->GetCamera(), textureHandle_);
 	for (std::vector<WorldTransform*>& worldTransformBlockkLine : worldTransformBlocks_) {
