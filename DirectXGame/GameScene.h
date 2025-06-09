@@ -3,6 +3,7 @@
 #include "Player.h"
 #include <vector>
 #include "Skydome.h"
+#include "MapChipField.h"
 
 class GameScene {
 public:
@@ -16,6 +17,8 @@ public:
 	void Draw();
 
 	~GameScene();
+
+	void GenerateBlocks();
 
 private:
 	//テクスチャハンドル
@@ -48,4 +51,6 @@ private:
 	Skydome* skydome_ = nullptr;
 	//3Dモデル
 	KamataEngine::Model* modelSkydome_ = nullptr;
+	//マップチップフィールド
+	MapChipField* mapChipField_;
 };
