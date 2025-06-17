@@ -1,4 +1,6 @@
 #include "MyMath.h"
+#include <cmath>
+#include <numbers>
 
 // 明示的に名前空間を指定して関数を呼ぶ
 KamataEngine::Matrix4x4 MakeAffineMatrix(const KamataEngine::Vector3& scale, const KamataEngine::Vector3& rotation, const KamataEngine::Vector3& translation) {
@@ -16,4 +18,12 @@ KamataEngine::Matrix4x4 MakeAffineMatrix(const KamataEngine::Vector3& scale, con
 	KamataEngine::Matrix4x4 matWorld = matScale * matRot * matTrans;
 
 	return matWorld;
+}
+
+// 線形補間
+float Lerp(float a, float b, float t) { return a + (b - a) * t; }
+
+float EaseInOut(float x1, float x2, float t) { 
+	float easedT = -(std::cosf(std::numbers::pi_v<float> * t) - 1.0f) / 2.0f;
+	return Lerp(x1, x2, easedT);
 }
