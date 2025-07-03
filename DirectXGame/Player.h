@@ -1,6 +1,5 @@
 #pragma once
 #include "KamataEngine.h"
-#include "Vector3.h"
 
 enum class LRDirection {
 	kNeutral,
@@ -24,6 +23,8 @@ public:
 	/// 初期化
 	/// </summary>
 	void Draw();
+
+	const KamataEngine::WorldTransform& GetWorldTransform() const { return worldTransform_; }
 
 private:
 	//ワールド変換データ

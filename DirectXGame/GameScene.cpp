@@ -19,6 +19,13 @@ void GameScene::Initialize() {
 	//自キャラの初期化
 	KamataEngine::Vector3 playerPosition = mapChipField_->GetMapChipPositionByIndex(1, 18);
 	player_->Initialize(model_,textureHandle_,&camera_,playerPosition);
+	//カメラコントローラーの生成
+	cameraController_ = new CameraController();
+	cameraController_->Initialize();
+	cameraController_->SetTarget(player_);
+	cameraController_->Reset();
+	Rect cameraArea = {12.0f, 100 - 12.0f, 6.0f, 6.0f};
+	cameraController_->SetMovableArea(cameraArea);
 	// サウンドデータハンドル
 	soundDataHandle_ = Audio::GetInstance()->LoadWave("fanfare.wav");
 	// 音声再生
@@ -87,6 +94,8 @@ void GameScene::Update() {
 	}
 #endif // _DEBUG
 	//カメラの処理
+	// 追従カメラの更新
+	cameraController_->Update();
 	if (isDebugCameraActive_) {
 		//デバックカメラの更新
 		debugCamera_->Update();
@@ -97,8 +106,11 @@ void GameScene::Update() {
 		//ビュープロジェクション行列の転送
 		camera_.TransferMatrix();
 	} else {
+		camera_.matView = cameraController_->GetViewProjection()->matView;
+		camera_.matProjection = cameraController_->GetViewProjection()->matProjection;
 		//ビュープロジェクション行列の更新と転送
-		camera_.UpdateMatrix();
+		camera_.TransferMatrix();
+		//camera_.UpdateMatrix();
 	}
 	skydome_->Update();
 }

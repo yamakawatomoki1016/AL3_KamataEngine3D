@@ -7,7 +7,6 @@
 #include <map>
 #include <sstream>
 #include <string>
-#include "Vector3.h"
 #include "KamataEngine.h"
 
 enum class MapChipType {
