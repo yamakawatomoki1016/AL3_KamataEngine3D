@@ -67,12 +67,12 @@ void GameScene::Update() {
 	}
 	//デバッグテキストの表示
 #ifdef _DEBUG
-	//float3入力ボックス
-	ImGui::InputFloat3("inputFloat3", inputFloat3);
-	//float3スライダー
-	ImGui::SliderFloat3("SliderFloat3", inputFloat3, 0.0f, 1.0f);
-	//デモウィンドウの表示の有効化
-	ImGui::ShowDemoWindow();
+	////float3入力ボックス
+	//ImGui::InputFloat3("inputFloat3", inputFloat3);
+	////float3スライダー
+	//ImGui::SliderFloat3("SliderFloat3", inputFloat3, 0.0f, 1.0f);
+	////デモウィンドウの表示の有効化
+	//ImGui::ShowDemoWindow();
 #endif
 	debugCamera_->Update();
 	player_->Update();
@@ -183,6 +183,7 @@ GameScene::~GameScene() {
 	delete skydome_;
 	delete modelSkydome_;
 	delete mapChipField_;
+	delete cameraController_;
 	for (std::vector<WorldTransform*>& worldTransformBlockkLine : worldTransformBlocks_) {
 		for (WorldTransform* worldTransformBlock : worldTransformBlockkLine) {
 			delete worldTransformBlock;

@@ -79,36 +79,17 @@ void Player::InputMove() {
 		velocity_.y = std::max(velocity_.y, -kLimitFallSpeed);
 	}
 
-	// 位置の更新
-	worldTransform_.translation_ += velocity_;
-}
-
-void Player::CheckMapCollision(CollisionMapInfo& info) {
-	// 上方向の当たり判定
-	info.isHitCeiling_ = CheckCollisionUp(info);
-
-	//// 下方向の当たり判定
-	//info.isOnGround_ = CheckCollisionDown(info);
-
-	//// 左方向の当たり判定
-	//bool hitLeft = CheckCollisionLeft(info);
-
-	//// 右方向の当たり判定
-	//bool hitRight = CheckCollisionRight(info);
-
-	//// 左右どちらかでも当たってたら壁接触フラグON
-	//info.isHitWall_ = hitLeft || hitRight;
 }
 
 bool Player::CheckCollisionUp(CollisionMapInfo& info) {
-	//移動後の４つの角の座標
+	// 移動後の４つの角の座標
 	std::array<KamataEngine::Vector3, kNumCorner> positionNew;
 
 	for (uint32_t i = 0; i < positionNew.size(); ++i) {
 		positionNew[i] = CornerPosition(worldTransform_.translation_ + info.moveAmount_, static_cast<Corner>(i));
 	}
-	//上昇あり？
-	if (info.moveAmount_.y <= 0) {
+	// 上昇あり？
+	if (info.moveAmount_.y <= 0.0f) {
 		return false;
 	}
 	// ヒット判定フラグ
@@ -133,21 +114,38 @@ bool Player::CheckCollisionUp(CollisionMapInfo& info) {
 	}
 
 	if (hit) {
-		//めり込みを排除する方向に移動量を設定する
-		IndexSet indexSet = mapChipField_->GetMapChipIndexSetByPosition(worldTransform_.translation_+info.moveAmount_+KamataEngine::Vector3(0,+kHeight/2.0f,0));
-		//めり込み先ブロックの範囲矩形
+		// めり込みを排除する方向に移動量を設定する
+		IndexSet indexSet = mapChipField_->GetMapChipIndexSetByPosition(worldTransform_.translation_ + info.moveAmount_ + KamataEngine::Vector3(0, +kHeight / 2.0f, 0));
+		// めり込み先ブロックの範囲矩形
 		Rect rect = mapChipField_->GetRectByIndex(indexSet.xIndex, indexSet.yIndex);
-		info.moveAmount_.y = std::max(0.0f,rect.bottom-worldTransform_.translation_.y-(kHeight/2.0f+kBlank));
+		info.moveAmount_.y = std::max(0.0f, rect.bottom - worldTransform_.translation_.y - (kHeight / 2.0f + kBlank));
 		info.isHitCeiling_ = true;
 	}
 	return hit;
 }
 
-//bool Player::CheckCollisionDown(const CollisionMapInfo& info) { return false; }
+// bool Player::CheckCollisionDown(const CollisionMapInfo& info) { return false; }
 //
-//bool Player::CheckCollisionLeft(const CollisionMapInfo& info) { return false; }
+// bool Player::CheckCollisionLeft(const CollisionMapInfo& info) { return false; }
 //
-//bool Player::CheckCollisionRight(const CollisionMapInfo& info) { return false; }
+// bool Player::CheckCollisionRight(const CollisionMapInfo& info) { return false; }
+
+void Player::CheckMapCollision(CollisionMapInfo& info) {
+	// 上方向の当たり判定
+	info.isHitCeiling_ = CheckCollisionUp(info);
+
+	//// 下方向の当たり判定
+	//info.isOnGround_ = CheckCollisionDown(info);
+
+	//// 左方向の当たり判定
+	//bool hitLeft = CheckCollisionLeft(info);
+
+	//// 右方向の当たり判定
+	//bool hitRight = CheckCollisionRight(info);
+
+	//// 左右どちらかでも当たってたら壁接触フラグON
+	//info.isHitWall_ = hitLeft || hitRight;
+}
 
 KamataEngine::Vector3 Player::CornerPosition(const KamataEngine::Vector3& center, Corner corner) { 
 	KamataEngine::Vector3 offsetTable[kNumCorner] = {
@@ -167,8 +165,7 @@ void Player::ApplyCollisionResult(const CollisionMapInfo& info) {
 void Player::ResolveCeilingCollision(const CollisionMapInfo& info) {
 	//天井に当たった？
 	if (info.isHitCeiling_) {
-		KamataEngine::DebugText::GetInstance()->ConsolePrintf("hit ceiling\n");
-		velocity_.y = 0;
+		velocity_.y = 0.0f;
 	}
 }
 
