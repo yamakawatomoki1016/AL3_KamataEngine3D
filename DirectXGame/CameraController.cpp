@@ -11,8 +11,10 @@ void CameraController::Initialize() {
 void CameraController::Update() {
 	// 追従対象のワールドトランスフォームを参照
 	const KamataEngine::WorldTransform& targetWorldTransform = target_->GetWorldTransform();
-	// 追従対象とオフセットからの座標を計算
-	camera_->translation_ = targetWorldTransform.translation_ + targetOffset_;
+	// 追従対象とオフセットと追従対象の速度からの目標座標を計算
+	targetPosition_ = targetWorldTransform.translation_ + targetOffset_ + target_->GetVelocity() * kVelocityBias;
+	//座標補間によりゆったり追従
+	camera_->translation_.x = Lerp(camera_->translation_.x, targetPosition_.x, kInterpolationRate);
 	//移動範囲制限
 	camera_->translation_.x = max(camera_->translation_.x, movableArea_.left);
 	camera_->translation_.x = min(camera_->translation_.x, movableArea_.right);
