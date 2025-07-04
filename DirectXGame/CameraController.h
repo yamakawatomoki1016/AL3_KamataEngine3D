@@ -37,4 +37,5 @@ private:
 	static inline const float kInterpolationRate = 0.1f;
 	//速度掛け率
 	static inline const float kVelocityBias = 20.0f;
+	static inline const Rect targetMargin = {-9.0f, 9.0f, -5.0f, 5.0f};
 };
