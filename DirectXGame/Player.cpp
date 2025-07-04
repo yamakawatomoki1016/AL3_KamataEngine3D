@@ -3,6 +3,7 @@
 #include "MyMath.h"
 #include <numbers>
 #include <algorithm>
+#include "MapChipField.h"
 
 using namespace KamataEngine::MathUtility;
 
@@ -19,64 +20,36 @@ void Player::Initialize(KamataEngine::Model* model, uint32_t textureHandle, Kama
 	worldTransform_.rotation_.y = std::numbers::pi_v<float> / 2.0f;
 }
 
-void Player::Update() {
-	// アフィン変換行列を計算してメンバ変数に代入（前フレーム用）
-	worldTransform_.matWorld_ = MakeAffineMatrix(worldTransform_.scale_, worldTransform_.rotation_, worldTransform_.translation_);
-
-	// 定数バッファに転送
-	worldTransform_.TransferMatrix();
-
+void Player::InputMove() {
 	if (onGround_) {
 		// 移動入力処理
 		if (KamataEngine::Input::GetInstance()->PushKey(DIK_RIGHT) || KamataEngine::Input::GetInstance()->PushKey(DIK_LEFT)) {
-
-			// 加速処理（左右）
 			KamataEngine::Vector3 acceleration = {};
 
-			// 右キー入力
 			if (KamataEngine::Input::GetInstance()->PushKey(DIK_RIGHT)) {
-
-				// 左向きから右向きに変えた場合
 				if (lrDirection_ != LRDirection::kRight) {
 					lrDirection_ = LRDirection::kRight;
-					// 急ブレーキ（逆方向入力時）
 					velocity_.x *= kAttenuation;
-					// 旋回開始時の角度を記録する
 					turnFirstRotationY_ = worldTransform_.rotation_.y;
-					// 旋回タイマーに時間を設定する
 					turnTimer_ = kTimeTurn;
 				}
-
 				acceleration.x += kAcceleration;
-			}
-			// 左キー入力
-			else if (KamataEngine::Input::GetInstance()->PushKey(DIK_LEFT)) {
-
-				// 右向きから左向きに変えた場合
+			} else if (KamataEngine::Input::GetInstance()->PushKey(DIK_LEFT)) {
 				if (lrDirection_ != LRDirection::kLeft) {
 					lrDirection_ = LRDirection::kLeft;
-					// 急ブレーキ（逆方向入力時）
 					velocity_.x *= kAttenuation;
-					// 旋回開始時の角度を記録する
 					turnFirstRotationY_ = worldTransform_.rotation_.y;
-					// 旋回タイマーに時間を設定する
 					turnTimer_ = kTimeTurn;
 				}
-
 				acceleration.x -= kAcceleration;
 			}
 
-			// 加速度分を速度に加算
 			velocity_ += acceleration;
-
-			// 最大速度制限
 			velocity_.x = std::clamp(velocity_.x, -kLimitRunSpeed, kLimitRunSpeed);
 		} else {
-			// 非入力時は減衰
 			constexpr float kDamping = 0.9f;
 			velocity_ *= kDamping;
 
-			// 微小速度はゼロに
 			if (std::abs(velocity_.x) < 0.01f)
 				velocity_.x = 0.0f;
 			if (std::abs(velocity_.y) < 0.01f)
@@ -86,93 +59,164 @@ void Player::Update() {
 		}
 
 		if (KamataEngine::Input::GetInstance()->TriggerKey(DIK_UP)) {
-			// ジャンプ初速
 			velocity_ += KamataEngine::Vector3(0, kJumpAcceleration, 0);
 		}
-		// 着地フラグ
+
 		bool landing = false;
-		// 地面との当たり判定
-		// 下降中？
-		if (velocity_.y < 0) {
-			// Y座標が地面以下になったら着地
-			if (worldTransform_.translation_.y <= 1.0f) {
-				landing = true;
-			}
+		if (velocity_.y < 0 && worldTransform_.translation_.y <= 1.0f) {
+			landing = true;
 		}
-		// 接地判定
-		if (onGround_) {
-			// ジャンプ開始
-			if (velocity_.y > 0.0f) {
-				// 空中状態に移行
-				onGround_ = false;
-			}
-		} else {
-			// 着地
-			if (landing) {
-				// めり込み排除
-				worldTransform_.translation_.y = 1.0f;
-				// 摩擦で横方向速度が減衰する
-				velocity_.x *= (1.0f - kAttenuation);
-				// 下方向速度をリセット
-				velocity_.y = 0.0f;
-				// 接地状態に移行
-				onGround_ = true;
-			}
+		if (onGround_ && velocity_.y > 0.0f) {
+			onGround_ = false;
+		} else if (!onGround_ && landing) {
+			worldTransform_.translation_.y = 1.0f;
+			velocity_.x *= (1.0f - kAttenuation);
+			velocity_.y = 0.0f;
+			onGround_ = true;
 		}
 	} else {
-		//落下速度
 		velocity_ += KamataEngine::Vector3(0, -kGravityAcceleration, 0);
-		//落下速度制限
 		velocity_.y = std::max(velocity_.y, -kLimitFallSpeed);
 	}
 
-	//旋回制御
-	//  旋回制御
+	// 位置の更新
+	worldTransform_.translation_ += velocity_;
+}
+
+void Player::CheckMapCollision(CollisionMapInfo& info) {
+	// 上方向の当たり判定
+	info.isHitCeiling_ = CheckCollisionUp(info);
+
+	//// 下方向の当たり判定
+	//info.isOnGround_ = CheckCollisionDown(info);
+
+	//// 左方向の当たり判定
+	//bool hitLeft = CheckCollisionLeft(info);
+
+	//// 右方向の当たり判定
+	//bool hitRight = CheckCollisionRight(info);
+
+	//// 左右どちらかでも当たってたら壁接触フラグON
+	//info.isHitWall_ = hitLeft || hitRight;
+}
+
+bool Player::CheckCollisionUp(CollisionMapInfo& info) {
+	//移動後の４つの角の座標
+	std::array<KamataEngine::Vector3, kNumCorner> positionNew;
+
+	for (uint32_t i = 0; i < positionNew.size(); ++i) {
+		positionNew[i] = CornerPosition(worldTransform_.translation_ + info.moveAmount_, static_cast<Corner>(i));
+	}
+	//上昇あり？
+	if (info.moveAmount_.y <= 0) {
+		return false;
+	}
+	// ヒット判定フラグ
+	bool hit = false;
+
+	// 左上チェック
+	{
+		IndexSet indexSet = mapChipField_->GetMapChipIndexSetByPosition(positionNew[kLeftTop]);
+		MapChipType mapChipType = mapChipField_->GetMapChipTypeByIndex(indexSet.xIndex, indexSet.yIndex);
+		if (mapChipType == MapChipType::kBlock) {
+			hit = true;
+		}
+	}
+
+	// 右上チェック
+	{
+		IndexSet indexSet = mapChipField_->GetMapChipIndexSetByPosition(positionNew[kRightTop]);
+		MapChipType mapChipType = mapChipField_->GetMapChipTypeByIndex(indexSet.xIndex, indexSet.yIndex);
+		if (mapChipType == MapChipType::kBlock) {
+			hit = true;
+		}
+	}
+
+	if (hit) {
+		//めり込みを排除する方向に移動量を設定する
+		IndexSet indexSet = mapChipField_->GetMapChipIndexSetByPosition(worldTransform_.translation_+info.moveAmount_+KamataEngine::Vector3(0,+kHeight/2.0f,0));
+		//めり込み先ブロックの範囲矩形
+		Rect rect = mapChipField_->GetRectByIndex(indexSet.xIndex, indexSet.yIndex);
+		info.moveAmount_.y = std::max(0.0f,rect.bottom-worldTransform_.translation_.y-(kHeight/2.0f+kBlank));
+		info.isHitCeiling_ = true;
+	}
+	return hit;
+}
+
+//bool Player::CheckCollisionDown(const CollisionMapInfo& info) { return false; }
+//
+//bool Player::CheckCollisionLeft(const CollisionMapInfo& info) { return false; }
+//
+//bool Player::CheckCollisionRight(const CollisionMapInfo& info) { return false; }
+
+KamataEngine::Vector3 Player::CornerPosition(const KamataEngine::Vector3& center, Corner corner) { 
+	KamataEngine::Vector3 offsetTable[kNumCorner] = {
+		{+kWidth / 2.0f, -kHeight / 2.0f, 0}, //kRightBottom
+	    {-kWidth / 2.0f, -kHeight / 2.0f, 0}, //kLeftBottom
+	    {+kWidth / 2.0f, +kHeight / 2.0f, 0}, //kRightTop
+	    {-kWidth / 2.0f, +kHeight / 2.0f, 0}, //LeftTop
+	};
+	return center + offsetTable[static_cast<uint32_t>(corner)];
+}
+
+void Player::ApplyCollisionResult(const CollisionMapInfo& info) {
+	//移動
+	worldTransform_.translation_ += info.moveAmount_;
+}
+
+void Player::ResolveCeilingCollision(const CollisionMapInfo& info) {
+	//天井に当たった？
+	if (info.isHitCeiling_) {
+		KamataEngine::DebugText::GetInstance()->ConsolePrintf("hit ceiling\n");
+		velocity_.y = 0;
+	}
+}
+
+
+
+void Player::Update() {
+	// 移動処理を分離
+	InputMove();
+
+	//衝突情報を初期化
+	CollisionMapInfo collisionMapInfo;
+	//移動量に速度の値をコピー
+	collisionMapInfo.moveAmount_ = velocity_;
+	//マップ衝突チェック
+	CheckMapCollision(collisionMapInfo);
+	ResolveCeilingCollision(collisionMapInfo);
+	ApplyCollisionResult(collisionMapInfo);
+
+	// 旋回制御などはUpdateに残す
 	if (turnTimer_ > 0.0f) {
-		// 1フレーム分時間を減らす
 		turnTimer_ -= 1.0f / 60.0f;
 		if (turnTimer_ < 0.0f)
 			turnTimer_ = 0.0f;
 
-		// 左右の自キャラ角度テーブル（右向きが π/2, 左向きが 3π/2）
-		float destinationRotationYTable[] = {
-		    std::numbers::pi_v<float> / 2.0f,       // 右向き（kRight）
-		    std::numbers::pi_v<float> * 3.0f / 2.0f // 左向き（kLeft）
-		};
-
+		float destinationRotationYTable[] = {std::numbers::pi_v<float> / 2.0f, std::numbers::pi_v<float> * 3.0f / 2.0f};
 		if (lrDirection_ != LRDirection::kNeutral) {
 			float destinationRotationY = destinationRotationYTable[static_cast<uint32_t>(lrDirection_) - 1];
-
-			// t を 0.0 → 1.0 に進行させる
 			float t = 1.0f - (turnTimer_ / kTimeTurn);
-			t = std::clamp(t, 0.0f, 1.0f); // 安全対策
-
+			t = std::clamp(t, 0.0f, 1.0f);
 			worldTransform_.rotation_.y = EaseInOut(turnFirstRotationY_, destinationRotationY, t);
 		}
 	}
 
-	// 地面の高さ（仮定値：Y=1.0f）
+	// 座標修正（地面と接触したときの補正）
 	constexpr float kGroundHeight = 1.0f;
-
-	// 次フレームのY座標を先に計算して、地面との衝突をチェック
 	float nextY = worldTransform_.translation_.y + velocity_.y;
-
-	// 落下中かつ次フレームで地面を突き抜ける場合
 	if (!onGround_ && nextY <= kGroundHeight) {
-		// 着地処理
 		worldTransform_.translation_.y = kGroundHeight;
 		velocity_.y = 0.0f;
-		velocity_.x *= (1.0f - kAttenuation); // 摩擦で横減衰
+		velocity_.x *= (1.0f - kAttenuation);
 		onGround_ = true;
-	} else {
-		// 通常の位置更新
-		worldTransform_.translation_ += velocity_;
 	}
 
-	// 移動後の行列再計算＆転送
+	// 行列再計算と転送
 	worldTransform_.matWorld_ = MakeAffineMatrix(worldTransform_.scale_, worldTransform_.rotation_, worldTransform_.translation_);
 	worldTransform_.TransferMatrix();
 }
 
 
 void Player::Draw() { model_->Draw(worldTransform_, *camera_); }
+

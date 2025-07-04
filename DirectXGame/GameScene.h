@@ -5,7 +5,8 @@
 #include "Skydome.h"
 #include "MapChipField.h"
 #include "CameraController.h"
-
+#include "Rect.h"
+using Common::Rect;
 class GameScene {
 public:
 	//初期化
