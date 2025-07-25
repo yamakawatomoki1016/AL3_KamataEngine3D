@@ -169,8 +169,6 @@ void Player::ResolveCeilingCollision(const CollisionMapInfo& info) {
 	}
 }
 
-
-
 void Player::Update() {
 	// 移動処理を分離
 	InputMove();
