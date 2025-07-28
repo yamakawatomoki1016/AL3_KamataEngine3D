@@ -12,6 +12,8 @@ void GameScene::Initialize() {
 
 	modelPlayer_ = Model::CreateFromOBJ("player", true);
 
+	modelEnemy_ = Model::CreateFromOBJ("enemy", true);
+
 	// skydomeの生成
 	skydome_ = new Skydome();
 
@@ -26,6 +28,13 @@ void GameScene::Initialize() {
 
 	// playerの初期化
 	player_->Initialize(modelPlayer_, &camera_, playerPosition);
+
+	// enemy の生成
+	enemy_ = new Enemy();
+
+	// enemyの場所
+	Vector3 enemyPosition = mapChipField_->GetMapChippositionByIndex(15, 18);
+	enemy_->Initialize(modelEnemy_, &camera_, enemyPosition);
 
 	//// 3dモデルの生成
 
@@ -111,6 +120,10 @@ GameScene::~GameScene() {
 	// マップの解放
 	delete mapChipField_;
 
+	// enemyの解放
+	delete enemy_;
+	enemy_ = nullptr;
+
 	// 箱の解放
 	for (std::vector<WorldTransform*>& worldTransformBlockLine : worldTransformBlocks_) {
 		for (WorldTransform* worldTransformBlock : worldTransformBlockLine) {
@@ -150,6 +163,8 @@ void GameScene::Update() {
 	debugCamera_->Update();
 
 	cameraController_->Update();
+
+	enemy_->Update();
 
 #ifdef _DEBUG
 	if (Input::GetInstance()->TriggerKey(DIK_D)) {
@@ -198,6 +213,8 @@ void GameScene::Draw() {
 	skydome_->Draw();
 
 	player_->Draw();
+
+	enemy_->Draw();
 
 	// 3Dモデルの描画後処理
 	Model::PostDraw();
