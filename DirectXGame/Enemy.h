@@ -20,7 +20,7 @@ public:
 	void Draw();
 
 	// 歩行の速さ
-	static inline const float kWalkSpeed = 0.05f;
+	static inline const float kWalkSpeed = 0.02f;
 
 	// 最初の角度
 	static inline const float kWalkMotionAngleStart = static_cast<float>(30.0 * std::numbers::pi / 180.0);
