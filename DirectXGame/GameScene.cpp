@@ -14,6 +14,8 @@ void GameScene::Initialize() {
 
 	modelEnemy_ = Model::CreateFromOBJ("enemy", true);
 
+	modelDeathParticles_ = Model::CreateFromOBJ("deathParticle", true);
+
 	// skydomeの生成
 	skydome_ = new Skydome();
 
@@ -24,7 +26,7 @@ void GameScene::Initialize() {
 	player_ = new Player();
 
 	// 座標をマップチップ番号で指定
-	Vector3 playerPosition = mapChipField_->GetMapChipPositionByIndex(1, 18);
+	Vector3 playerPosition = mapChipField_->GetMapChipPositionByIndex(2, 18);
 
 	// playerの初期化
 	player_->Initialize(modelPlayer_, &camera_, playerPosition);
@@ -39,6 +41,10 @@ void GameScene::Initialize() {
 
 		enemies_.push_back(newEnemy);
 	}
+
+	// 仮の生成処理
+	deathParticles_ = new DeathParticles;
+	deathParticles_->Initialize(modelDeathParticles_, &camera_, playerPosition);
 
 	//// 3dモデルの生成
 
@@ -129,6 +135,10 @@ GameScene::~GameScene() {
 		delete enemy;
 	}
 
+	// deathParticles_の解放
+	delete deathParticles_;
+	deathParticles_ = nullptr;
+
 	// 箱の解放
 	for (std::vector<WorldTransform*>& worldTransformBlockLine : worldTransformBlocks_) {
 		for (WorldTransform* worldTransformBlock : worldTransformBlockLine) {
@@ -172,6 +182,11 @@ void GameScene::Update() {
 	// enemyの更新
 	for (Enemy* enemy : enemies_) {
 		enemy->Update();
+	}
+
+	// deathParticles_の更新
+	if (deathParticles_) {
+		deathParticles_->Update();
 	}
 
 	// 全ての当たり判定を行う
@@ -228,6 +243,11 @@ void GameScene::Draw() {
 	// enemyの描画
 	for (Enemy* enemy : enemies_) {
 		enemy->Draw();
+	}
+
+	// deathParticles_の描画
+	if (deathParticles_) {
+		deathParticles_->Draw();
 	}
 
 	// 3Dモデルの描画後処理

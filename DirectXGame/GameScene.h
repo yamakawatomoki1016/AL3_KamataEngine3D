@@ -1,5 +1,6 @@
 #pragma once
 #include "CameraController.h"
+#include "DeathParticles.h"
 #include "Enemy.h"
 #include "KamataEngine.h"
 #include "MapChipField.h"
@@ -61,6 +62,12 @@ public:
 
 	// enemy3Dモデル
 	KamataEngine::Model* modelEnemy_ = nullptr;
+
+	// DeathParticles
+	DeathParticles* deathParticles_ = nullptr;
+
+	// パーティクルモデル
+	KamataEngine::Model* modelDeathParticles_ = nullptr;
 
 	// 全ての当たり判定を行う
 	void CheckAllCollisions();
