@@ -1,57 +1,132 @@
-#include <Windows.h>
-#include <KamataEngine.h>
 #include "GameScene.h"
+#include "KamataEngine.h"
+#include "TitleScene.h"
+#include <Windows.h>
 
 using namespace KamataEngine;
 
-//Windowsアプリでのエントリーポイント(main関数)
-int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
-	
-	//エンジンの初期化
-	KamataEngine::Initialize(L"GC2C_12_ヤマカワ_トモキ_AL3");
-	DirectXCommon* dxCommon = DirectXCommon::GetInstance();
-	//ゲームシーンのインスタンス生成
-	GameScene* gameScene = new GameScene();
-	//ゲームシーンの初期化
-	gameScene->Initialize();
-	//ImGuiManagerインスタンスの取得
-	ImGuiManager* imguiManager = ImGuiManager::GetInstance();
+GameScene* gameScene = nullptr;
+TitleScene* titleScene = nullptr;
 
-	//メインループ
-	while (true) {
-	//エンジンの更新 
-		if (KamataEngine::Update()) {
-		break;
+enum class Scene {
+
+	kUnknown = 0,
+
+	kTitle,
+	kGame,
+};
+
+// 現在シーン
+Scene scene = Scene::kUnknown;
+
+void ChangeScene() {
+	switch (scene) {
+	case Scene::kTitle:
+
+		if (titleScene->IsFinished()) {
+			scene = Scene::kGame;
+
+			delete titleScene;
+			titleScene = nullptr;
+
+			gameScene = new GameScene;
+			gameScene->Initialize();
 		}
 
-		//ImGui受付開始
-		imguiManager->Begin();
+		break;
+	case Scene::kGame:
 
-		//ゲームシーンの更新
+		if (gameScene->IsFinished()) {
+			scene = Scene::kTitle;
+
+			delete gameScene;
+			gameScene = nullptr;
+
+			titleScene = new TitleScene;
+			titleScene->Initialize();
+		}
+
+		break;
+	}
+}
+
+void UpdateScene() {
+	switch (scene) {
+	case Scene::kTitle:
+
+		titleScene->Update();
+
+		break;
+	case Scene::kGame:
+
 		gameScene->Update();
 
-		// ImGui受付終了
-		imguiManager->End();
+		break;
+	}
+}
 
-		//描画処理
-		dxCommon->PreDraw();
+void DrawScene() {
+	switch (scene) {
+	case Scene::kTitle:
 
-		//ゲームシーンの描画
+		titleScene->Draw();
+
+		break;
+	case Scene::kGame:
+
 		gameScene->Draw();
 
-		//軸表示の描画
-		AxisIndicator::GetInstance()->Draw();
+		break;
+	}
+}
 
-		// ImGui描画
-		imguiManager->Draw();
+// Windowsアプリでのエントリーポイント(main関数)
+int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
+	// エンジンの初期化
+	KamataEngine::Initialize(L"GC2C_12_ヤマカワ_トモキ_AL3");
 
-		//描画終了
+	// DirectXの機能取得
+	DirectXCommon* dxCommon = DirectXCommon::GetInstance();
+
+	// タイトルシーンの取得・初期化
+	scene = Scene::kTitle;
+	titleScene = new TitleScene;
+	titleScene->Initialize();
+
+	// ゲームシーンの取得・初期化
+	gameScene = new GameScene();
+	gameScene->Initialize();
+
+	// メインループ
+	while (true) {
+		// エンジンの更新
+		if (KamataEngine::Update()) {
+			break;
+		}
+
+		// タイトルシーンの更新
+		//
+		ChangeScene();
+		UpdateScene();
+
+		// 描画開始
+		dxCommon->PreDraw();
+
+		// タイトルシーンの描画
+		DrawScene();
+
+		// 描画終了
 		dxCommon->PostDraw();
 	}
 
+	// ゲームシーンの解放
 	delete gameScene;
 	gameScene = nullptr;
-	//エンジンの終了処理
+
+	// タイトルシーンの解放
+	delete titleScene;
+	titleScene = nullptr;
+
 	KamataEngine::Finalize();
 
 	return 0;

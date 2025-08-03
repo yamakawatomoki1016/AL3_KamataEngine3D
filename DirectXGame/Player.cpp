@@ -1,7 +1,6 @@
 #define NOMINMAX
 #include "Player.h"
 #include "MapChipField.h"
-#include "MyMath.h"
 #include <algorithm>
 #include <cassert>
 #include <numbers>
@@ -445,8 +444,7 @@ AABB Player::GetAABB() {
 
 void Player::OnCollision(const Enemy* enemy) {
 	(void)enemy;
-	// ジャンプ開始(仮処理)
-	velocity_ += Vector3(0, 1, 0);
+	isDead_ = true;
 }
 
 // 7旋回制御
