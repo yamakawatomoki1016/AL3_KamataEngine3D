@@ -2,6 +2,7 @@
 #include "CameraController.h"
 #include "DeathParticles.h"
 #include "Enemy.h"
+#include "Fade.h"
 #include "KamataEngine.h"
 #include "MapChipField.h"
 #include "Skydome.h"
@@ -12,8 +13,10 @@ class GameScene {
 public:
 	// ゲームのフェーズ
 	enum class Phase {
+		kFadeIn,
 		kPlay,  // ゲームプレイ
 		kDeath, // デス演出
+		kFadeOut,
 	};
 
 	// ゲームの現在フェーズ
@@ -88,4 +91,6 @@ public:
 private:
 	// 終了フラグ
 	bool finished = false;
+
+	Fade* fade_ = nullptr;
 };
